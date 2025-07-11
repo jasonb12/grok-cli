@@ -345,64 +345,75 @@ def info(server_name):
 
 @mcp.command()
 def demo():
-    """Run MCP integration demonstration"""
-    try:
-        os.system("python test_mcp_integration.py")
-    except Exception as e:
-        click.echo(f"❌ Demo error: {e}")
+    """Run interactive MCP demo"""
+    click.echo("🎮 Starting MCP Interactive Demo...")
+    os.system("python test_mcp_integration.py interactive")
 
 @cli.command()
 def tools():
-    """List all available tools across all agents"""
-    click.echo("🛠️  **Available Tools by Agent Type**")
-    click.echo("=" * 60)
-    
-    # Standard agent tools
+    """List all available tools"""
     try:
-        from .agent import GrokAgent
-        agent = GrokAgent()
-        tools = agent.get_config().get('tools', [])
-        click.echo(f"\n🤖 **Standard Agent** ({len(tools)} tools)")
-        for tool in tools[:5]:  # Show first 5
-            click.echo(f"   • {tool}")
-        if len(tools) > 5:
-            click.echo(f"   ... and {len(tools) - 5} more")
+        # Try to load the most advanced agent available
+        agent = None
+        agent_type = "Unknown"
+        
+        try:
+            from .mcp_enhanced_agent import MCPEnhancedGrokAgent
+            agent = MCPEnhancedGrokAgent()
+            agent_type = "MCP-Enhanced"
+        except:
+            try:
+                from .enhanced_agent import EnhancedGrokAgent
+                agent = EnhancedGrokAgent()
+                agent_type = "Enhanced"
+            except:
+                from .agent import GrokAgent
+                agent = GrokAgent()
+                agent_type = "Standard"
+        
+        click.echo(f"🛠️  **{agent_type} Agent Tools**")
+        click.echo("=" * 50)
+        agent.list_available_tools()
+        
     except Exception as e:
-        click.echo(f"❌ Standard agent error: {e}")
-    
-    # Enhanced agent tools
-    try:
-        from .enhanced_agent import EnhancedGrokAgent
-        agent = EnhancedGrokAgent()
-        config = agent.get_config()
-        click.echo(f"\n✨ **Enhanced Agent** ({config.get('total_tools', 'N/A')} tools)")
-        click.echo(f"   • Composio tools: {config.get('composio_tools', 'N/A')}")
-        click.echo(f"   • Custom tools: {config.get('custom_tools', 'N/A')}")
-    except Exception as e:
-        click.echo(f"❌ Enhanced agent error: {e}")
-    
-    # MCP agent tools
-    try:
-        from .mcp_enhanced_agent import MCPEnhancedGrokAgent
-        agent = MCPEnhancedGrokAgent()
-        config = agent.get_config()
-        click.echo(f"\n🔌 **MCP Agent** ({config.get('total_tools', 'N/A')} tools)")
-        click.echo(f"   • Available servers: {len(config.get('available_mcp_servers', []))}")
-        click.echo(f"   • Active servers: {len(config.get('active_mcp_servers', []))}")
-    except Exception as e:
-        click.echo(f"❌ MCP agent error: {e}")
-    
-    # Project agent tools
-    try:
-        from .project_agent import ProjectAwareGrokAgent
-        agent = ProjectAwareGrokAgent()
-        config = agent.get_config()
-        click.echo(f"\n🎯 **Project Agent** ({config.get('total_tools', 'N/A')} tools)")
-        click.echo(f"   • Project-aware development tools")
-        click.echo(f"   • Git integration tools")
-        click.echo(f"   • Language detection tools")
-    except Exception as e:
-        click.echo(f"❌ Project agent error: {e}")
+        click.echo(f"❌ Error listing tools: {e}")
 
-if __name__ == "__main__":
+@cli.command()
+def config():
+    """Show current configuration"""
+    try:
+        # Load environment variables
+        from dotenv import load_dotenv
+        load_dotenv()
+        
+        click.echo("⚙️  **Current Configuration**")
+        click.echo("=" * 40)
+        
+        config_vars = [
+            ('GROK_API_KEY', 'API Key'),
+            ('GROK_MODEL', 'Model'),
+            ('GROK_BASE_URL', 'Base URL'),
+            ('GROK_TEMPERATURE', 'Temperature'),
+            ('GROK_MAX_TOKENS', 'Max Tokens'),
+            ('GROK_VERBOSE', 'Verbose Mode')
+        ]
+        
+        for var, label in config_vars:
+            value = os.getenv(var, 'Not set')
+            if var == 'GROK_API_KEY' and value != 'Not set':
+                value = f"{value[:8]}..." + "*" * 10  # Mask API key
+            click.echo(f"{label:15}: {value}")
+            
+        # Check .env file
+        env_exists = os.path.exists('.env')
+        click.echo(f"{''.ljust(15)}: {'Found' if env_exists else 'Not found'}")
+        
+    except Exception as e:
+        click.echo(f"❌ Error loading configuration: {e}")
+
+def main():
+    """Main entry point"""
     cli()
+
+if __name__ == '__main__':
+    main()
