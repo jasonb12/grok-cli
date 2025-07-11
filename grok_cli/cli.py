@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Command-line interface for Grok CLI with project-aware development support
-Like Claude Code - works directly on local projects
+Command-line interface for Grok CLI with MCP server support and project-aware development
+Enhanced version with filesystem tools, MCP integration, and project-aware capabilities like Claude Code
 """
 
 import click
@@ -15,9 +15,12 @@ load_dotenv()
 @click.group()
 @click.version_option()
 def cli():
-    """🚀 Grok CLI - AI Assistant for Local Development
+    """🚀 Grok CLI - AI Assistant with Enhanced Capabilities
     
-    A powerful command-line AI assistant that works like Claude Code:
+    A powerful command-line AI assistant that combines:
+    • Composio file and shell tools
+    • Enhanced filesystem operations
+    • MCP (Model Context Protocol) server integration
     • Direct filesystem access
     • Project-aware development
     • Git integration and merge conflict resolution
