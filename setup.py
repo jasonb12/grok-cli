@@ -11,10 +11,11 @@ setup(
         'langchain',
         'langchain_openai',
         'langchain_community',
+        'python-dotenv',
     ],
     entry_points={
         'console_scripts': [
-            'grok_cli = grok_cli.cli:main',
+            'grok-cli = grok_cli.cli:main',
         ],
     },
     author='Your Name',
