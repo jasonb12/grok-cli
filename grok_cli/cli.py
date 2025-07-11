@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-Command-line interface for Grok CLI with MCP server support
-Enhanced version with filesystem tools and MCP integration
+Command-line interface for Grok CLI with comprehensive development support
+Combines MCP server integration with project-aware development features
 """
 
 import click
 import os
 from dotenv import load_dotenv
+from pathlib import Path
 
 # Load environment variables
 load_dotenv()
@@ -14,14 +15,108 @@ load_dotenv()
 @click.group()
 @click.version_option()
 def cli():
-    """🚀 Grok CLI - AI Assistant with Enhanced Capabilities
+    """🚀 Grok CLI - AI Assistant for Development & MCP Integration
     
     A powerful command-line AI assistant that combines:
-    • Composio file and shell tools
-    • Enhanced filesystem operations
+    • Project-aware development (like Claude Code)
     • MCP (Model Context Protocol) server integration
+    • Enhanced filesystem operations
+    • Git integration and merge conflict resolution
     """
     pass
+
+@cli.command()
+@click.option('--project-path', type=click.Path(exists=True), help='Path to project directory (defaults to current)')
+@click.option('--config', type=click.Path(), help='Path to .env configuration file')
+@click.option('--temperature', type=float, help='Model temperature (0.0-2.0)')
+@click.option('--max-tokens', type=int, help='Maximum tokens in response')
+@click.option('--verbose', is_flag=True, help='Enable verbose mode')
+def dev(project_path, config, temperature, max_tokens, verbose):
+    """Start project-aware development mode (like Claude Code)"""
+    
+    # Load custom config if provided
+    if config:
+        from dotenv import load_dotenv
+        load_dotenv(config)
+        click.echo(f"📄 Loaded configuration from: {config}")
+    
+    # Set project path
+    if project_path:
+        project_path = Path(project_path).resolve()
+    else:
+        project_path = Path.cwd()
+    
+    click.echo("🚀 " + "="*60)
+    click.echo("   GROK CLI - PROJECT-AWARE DEVELOPMENT MODE")
+    click.echo("="*60)
+    click.echo(f"📁 Project: {project_path.name}")
+    click.echo(f"📍 Path: {project_path}")
+    
+    # Initialize project-aware agent
+    try:
+        from .project_agent import ProjectAwareGrokAgent
+        
+        agent = ProjectAwareGrokAgent(
+            project_path=project_path,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            verbose=verbose
+        )
+        
+        # Show project analysis
+        project_info = agent.get_project_info()
+        click.echo(f"🔍 Languages: {', '.join(project_info['languages']) if project_info['languages'] else 'Unknown'}")
+        click.echo(f"🛠️  Frameworks: {', '.join(project_info['frameworks']) if project_info['frameworks'] else 'None detected'}")
+        click.echo(f"📊 Files: {project_info['file_count']} files found")
+        click.echo(f"📋 Git: {'Yes' if project_info['is_git_repo'] else 'No'}")
+        
+        click.echo("="*60)
+        click.echo("💬 Ready for development! Ask me to:")
+        click.echo("   • Analyze your codebase")
+        click.echo("   • Fix merge conflicts")
+        click.echo("   • Debug issues")
+        click.echo("   • Refactor code")
+        click.echo("   • Run tests or builds")
+        click.echo("💡 Type 'quit', 'exit', or press Ctrl+C to stop.")
+        click.echo("="*60)
+        
+        # Interactive development loop
+        while True:
+            try:
+                user_input = input(f"\n🎯 {project_path.name}> ").strip()
+                
+                if user_input.lower() in ['quit', 'exit', 'bye']:
+                    click.echo("👋 Happy coding!")
+                    break
+                
+                if user_input.lower() == 'status':
+                    project_info = agent.get_project_info()
+                    click.echo(f"\n📊 **Project Status:**")
+                    click.echo(f"   Current directory: {project_info['current_dir']}")
+                    click.echo(f"   Languages: {', '.join(project_info['languages'])}")
+                    click.echo(f"   Frameworks: {', '.join(project_info['frameworks'])}")
+                    continue
+                
+                if user_input.lower() == 'tools':
+                    agent.list_available_tools()
+                    continue
+                
+                if user_input:
+                    click.echo("\n🤖 Assistant:")
+                    agent.chat(user_input)
+                    
+            except KeyboardInterrupt:
+                click.echo("\n👋 Happy coding!")
+                break
+            except Exception as e:
+                click.echo(f"❌ Error: {e}")
+                
+    except ImportError as e:
+        click.echo(f"❌ Import error: {e}")
+        click.echo("💡 Make sure all dependencies are installed: pip install -r requirements.txt")
+    except Exception as e:
+        click.echo(f"❌ Initialization error: {e}")
+        click.echo("💡 Check your .env file and API key configuration")
 
 @cli.command()
 @click.option('--config', type=click.Path(), help='Path to .env configuration file')
@@ -164,11 +259,24 @@ def setup():
 @cli.command()
 @click.option('--enhanced', is_flag=True, default=True, help='Test enhanced filesystem tools')
 @click.option('--mcp', is_flag=True, help='Test MCP integration')
-def test(enhanced, mcp):
+@click.option('--project', is_flag=True, help='Test project-aware mode')
+def test(enhanced, mcp, project):
     """Test tools and functionality"""
     click.echo("🧪 Running tool tests...")
     
-    if mcp:
+    if project:
+        click.echo("🎯 Testing project-aware mode...")
+        try:
+            from .project_agent import ProjectAwareGrokAgent
+            agent = ProjectAwareGrokAgent()
+            click.echo("✅ Project agent initialized successfully")
+            project_info = agent.get_project_info()
+            click.echo(f"📁 Project: {project_info['project_name']}")
+            click.echo(f"🔍 Languages: {', '.join(project_info['languages'])}")
+            click.echo(f"📊 Files: {project_info['file_count']} files")
+        except Exception as e:
+            click.echo(f"❌ Project test error: {e}")
+    elif mcp:
         click.echo("🔌 Testing MCP integration...")
         os.system("python test_mcp_integration.py")
     elif enhanced:
@@ -234,75 +342,64 @@ def info(server_name):
 
 @mcp.command()
 def demo():
-    """Run interactive MCP demo"""
-    click.echo("🎮 Starting MCP Interactive Demo...")
-    os.system("python test_mcp_integration.py interactive")
+    """Run MCP integration demonstration"""
+    try:
+        os.system("python test_mcp_integration.py")
+    except Exception as e:
+        click.echo(f"❌ Demo error: {e}")
 
 @cli.command()
 def tools():
-    """List all available tools"""
+    """List all available tools across all agents"""
+    click.echo("🛠️  **Available Tools by Agent Type**")
+    click.echo("=" * 60)
+    
+    # Standard agent tools
     try:
-        # Try to load the most advanced agent available
-        agent = None
-        agent_type = "Unknown"
-        
-        try:
-            from .mcp_enhanced_agent import MCPEnhancedGrokAgent
-            agent = MCPEnhancedGrokAgent()
-            agent_type = "MCP-Enhanced"
-        except:
-            try:
-                from .enhanced_agent import EnhancedGrokAgent
-                agent = EnhancedGrokAgent()
-                agent_type = "Enhanced"
-            except:
-                from .agent import GrokAgent
-                agent = GrokAgent()
-                agent_type = "Standard"
-        
-        click.echo(f"🛠️  **{agent_type} Agent Tools**")
-        click.echo("=" * 50)
-        agent.list_available_tools()
-        
+        from .agent import GrokAgent
+        agent = GrokAgent()
+        tools = agent.get_config().get('tools', [])
+        click.echo(f"\n🤖 **Standard Agent** ({len(tools)} tools)")
+        for tool in tools[:5]:  # Show first 5
+            click.echo(f"   • {tool}")
+        if len(tools) > 5:
+            click.echo(f"   ... and {len(tools) - 5} more")
     except Exception as e:
-        click.echo(f"❌ Error listing tools: {e}")
-
-@cli.command()
-def config():
-    """Show current configuration"""
+        click.echo(f"❌ Standard agent error: {e}")
+    
+    # Enhanced agent tools
     try:
-        # Load environment variables
-        from dotenv import load_dotenv
-        load_dotenv()
-        
-        click.echo("⚙️  **Current Configuration**")
-        click.echo("=" * 40)
-        
-        config_vars = [
-            ('GROK_API_KEY', 'API Key'),
-            ('GROK_MODEL', 'Model'),
-            ('GROK_BASE_URL', 'Base URL'),
-            ('GROK_TEMPERATURE', 'Temperature'),
-            ('GROK_MAX_TOKENS', 'Max Tokens'),
-            ('GROK_VERBOSE', 'Verbose Mode')
-        ]
-        
-        for var, label in config_vars:
-            value = os.getenv(var, 'Not set')
-            if var == 'GROK_API_KEY' and value != 'Not set':
-                value = f"{value[:8]}..." + "*" * 10  # Mask API key
-            click.echo(f"{label:15}: {value}")
-            
-        # Check .env file
-        env_exists = os.path.exists('.env')
-        click.echo(f"{''.ljust(15)}: {'Found' if env_exists else 'Not found'}")
-        
+        from .enhanced_agent import EnhancedGrokAgent
+        agent = EnhancedGrokAgent()
+        config = agent.get_config()
+        click.echo(f"\n✨ **Enhanced Agent** ({config.get('total_tools', 'N/A')} tools)")
+        click.echo(f"   • Composio tools: {config.get('composio_tools', 'N/A')}")
+        click.echo(f"   • Custom tools: {config.get('custom_tools', 'N/A')}")
     except Exception as e:
-        click.echo(f"❌ Error loading configuration: {e}")
+        click.echo(f"❌ Enhanced agent error: {e}")
+    
+    # MCP agent tools
+    try:
+        from .mcp_enhanced_agent import MCPEnhancedGrokAgent
+        agent = MCPEnhancedGrokAgent()
+        config = agent.get_config()
+        click.echo(f"\n🔌 **MCP Agent** ({config.get('total_tools', 'N/A')} tools)")
+        click.echo(f"   • Available servers: {len(config.get('available_mcp_servers', []))}")
+        click.echo(f"   • Active servers: {len(config.get('active_mcp_servers', []))}")
+    except Exception as e:
+        click.echo(f"❌ MCP agent error: {e}")
+    
+    # Project agent tools
+    try:
+        from .project_agent import ProjectAwareGrokAgent
+        agent = ProjectAwareGrokAgent()
+        config = agent.get_config()
+        click.echo(f"\n🎯 **Project Agent** ({config.get('total_tools', 'N/A')} tools)")
+        click.echo(f"   • Project-aware development tools")
+        click.echo(f"   • Git integration tools")
+        click.echo(f"   • Language detection tools")
+    except Exception as e:
+        click.echo(f"❌ Project agent error: {e}")
 
-def main():
-    """Main entry point"""
+if __name__ == "__main__":
     cli()
-
-if __name__ == '__main__':
-    main()
