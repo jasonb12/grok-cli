@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 """
+<<<<<<< HEAD
 Command-line interface for Grok CLI with comprehensive development support
 Combines MCP server integration with project-aware development features
+=======
+Command-line interface for Grok CLI with MCP server support and project-aware development
+Enhanced version with filesystem tools, MCP integration, and project-aware capabilities like Claude Code
+>>>>>>> main
 """
 
 import click
@@ -15,12 +20,23 @@ load_dotenv()
 @click.group()
 @click.version_option()
 def cli():
+<<<<<<< HEAD
     """🚀 Grok CLI - AI Assistant for Development & MCP Integration
     
     A powerful command-line AI assistant that combines:
     • Project-aware development (like Claude Code)
     • MCP (Model Context Protocol) server integration
     • Enhanced filesystem operations
+=======
+    """🚀 Grok CLI - AI Assistant with Enhanced Capabilities
+    
+    A powerful command-line AI assistant that combines:
+    • Composio file and shell tools
+    • Enhanced filesystem operations
+    • MCP (Model Context Protocol) server integration
+    • Direct filesystem access
+    • Project-aware development
+>>>>>>> main
     • Git integration and merge conflict resolution
     """
     pass
