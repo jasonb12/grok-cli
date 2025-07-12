@@ -53,8 +53,10 @@ class ProjectAwareGrokAgent:
         self.tools = self.composio_toolset.get_tools(apps=[
             App.FILETOOL,      # File operations (read, write, create, delete)
             App.SHELLTOOL,     # Shell/terminal commands
-            App.GITHUBTOOL,    # Git operations for version control
         ])
+        
+        # Add local Git operations via shell instead of GitHub API
+        # This avoids authentication issues and works with local repos
         
         # Analyze project structure for context
         self.project_context = self._analyze_project_structure()
